@@ -5,6 +5,9 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+  schedule:
+    # 매시간 실행 (UTC 기준)
+    - cron: '0 * * * *'
 
 jobs:
   test:
