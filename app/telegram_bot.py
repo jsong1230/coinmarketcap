@@ -93,20 +93,12 @@ class TelegramBot:
                 )
                 return
             
-            message = f"📊 포트폴리오 요약\n\n"
-            message += f"총 평가액: {summary['total_value']:,.2f} {user.base_currency}\n\n"
-            
-            for item in summary['items']:
-                price_info = summary['price_data'].get(item['symbol'], {})
-                price = price_info.get('price', 0)
-                value = item['quantity'] * price
-                change_24h = price_info.get('percent_change_24h', 0)
-                
-                message += f"💰 {item['symbol']}\n"
-                message += f"   수량: {item['quantity']:.6f}\n"
-                message += f"   가격: ${price:,.2f}\n"
-                message += f"   평가액: {value:,.2f} {user.base_currency}\n"
-                message += f"   24h 변동: {change_24h:+.2f}%\n\n"
+            message = format_portfolio_message(
+                total_value=summary['total_value'],
+                base_currency=user.base_currency,
+                items=summary['items'],
+                price_data=summary['price_data']
+            )
             
             await update.message.reply_text(message)
         except Exception as e:
