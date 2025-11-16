@@ -2,16 +2,35 @@
 
 ## 1. 서버 실행
 
+### 방법 A: 스크립트 사용 (권장)
+
 ```bash
-cd /Users/joohansong/dev/coinmarketcap
-source venv/bin/activate
-python run.py
+chmod +x scripts/start_server.sh  # 처음 한 번만 실행
+./scripts/start_server.sh
+```
+
+스크립트는 자동으로:
+- 프로젝트 루트로 이동
+- 가상환경 활성화
+- 서버 시작
+
+### 방법 B: 직접 실행
+
+```bash
+# 프로젝트 루트로 이동
+cd /path/to/coinmarketcap
+
+# 가상환경 활성화
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 서버 실행
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 또는:
 
 ```bash
-./start_server.sh
+python run.py
 ```
 
 ## 2. 포트폴리오 등록
@@ -20,7 +39,7 @@ python run.py
 
 ```bash
 # 텔레그램 chat_id 필요
-python register_portfolio.py YOUR_TELEGRAM_CHAT_ID
+python scripts/register_portfolio.py YOUR_TELEGRAM_CHAT_ID
 ```
 
 ### 방법 B: API 직접 호출

@@ -7,6 +7,7 @@ from app.models import User, AlertSettings
 from app.services import PortfolioService
 from app.utils import format_portfolio_message
 import logging
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,15 @@ class TelegramBot:
     """텔레그램 봇 핸들러"""
     
     def __init__(self):
-        self.application = Application.builder().token(settings.telegram_bot_token).build()
+        # 타임아웃 설정 추가 (연결 문제 방지)
+        self.application = (
+            Application.builder()
+            .token(settings.telegram_bot_token)
+            .read_timeout(30)
+            .write_timeout(30)
+            .connect_timeout(30)
+            .build()
+        )
         self.setup_handlers()
     
     def setup_handlers(self):
@@ -179,7 +188,23 @@ class TelegramBot:
         await update.message.reply_text(help_text)
     
     def run(self):
-        """봇 실행"""
+        """봇 실행 (별도 스레드에서 실행)"""
         logger.info("텔레그램 봇 시작...")
-        self.application.run_polling(allowed_updates=Update.ALL_TYPES)
+        # 새로운 이벤트 루프 생성 (별도 스레드용)
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            # run_polling은 무한 루프로 실행되므로 run_until_complete로 감싸면 계속 실행됨
+            # stop_signals=None으로 시그널 핸들러 비활성화 (별도 스레드에서는 사용 불가)
+            loop.run_until_complete(
+                self.application.run_polling(
+                    allowed_updates=Update.ALL_TYPES,
+                    stop_signals=None,  # 시그널 핸들러 비활성화
+                    drop_pending_updates=True
+                )
+            )
+        except Exception as e:
+            logger.error(f"텔레그램 봇 실행 중 오류: {e}", exc_info=True)
+        finally:
+            loop.close()
 

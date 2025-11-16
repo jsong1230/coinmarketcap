@@ -32,19 +32,27 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 
 3. 의존성 설치:
 ```bash
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
 4. 환경 변수 설정:
+프로젝트 루트에 `.env` 파일을 생성하고 다음 내용을 입력하세요:
 ```bash
-cp .env.example .env
-# .env 파일을 편집하여 API 키 입력
+CMC_API_KEY=your_cmc_api_key_here
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+DATABASE_URL=sqlite:///./cryptowatcher.db
+HOST=0.0.0.0
+PORT=8000
+SCHEDULER_INTERVAL_MINUTES=5
 ```
 
 5. 데이터베이스 초기화:
 ```bash
 alembic upgrade head
 ```
+
+**참고**: 데이터베이스는 서버 시작 시 자동으로 생성되므로 이 단계는 선택사항입니다.
 
 ## 실행
 
@@ -56,8 +64,11 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 또는 스크립트 사용:
 ```bash
+chmod +x scripts/start_server.sh  # 처음 한 번만 실행
 ./scripts/start_server.sh
 ```
+
+**참고**: 스크립트는 자동으로 프로젝트 루트를 찾고 가상환경을 활성화합니다.
 
 ### 로컬 모니터링 (백그라운드)
 

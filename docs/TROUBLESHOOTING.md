@@ -1,5 +1,49 @@
 # 문제 해결 가이드
 
+## 서버 실행 문제
+
+### 문제 1: "ModuleNotFoundError: No module named 'telegram'"
+**원인**: 가상환경이 활성화되지 않았거나 의존성이 설치되지 않음
+
+**해결**:
+```bash
+# 가상환경 생성 (없는 경우)
+python3.11 -m venv venv
+
+# 가상환경 활성화
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 의존성 설치
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 문제 2: "There is no current event loop in thread"
+**원인**: 텔레그램 봇이 별도 스레드에서 실행될 때 이벤트 루프가 없음
+
+**해결**: 최신 버전의 코드를 사용하면 자동으로 해결됩니다. 코드를 최신으로 업데이트하세요.
+
+### 문제 3: 스크립트 실행 권한 오류
+**원인**: 스크립트에 실행 권한이 없음
+
+**해결**:
+```bash
+chmod +x scripts/start_server.sh
+```
+
+### 문제 4: ".env 파일을 찾을 수 없음"
+**원인**: 환경 변수 파일이 없음
+
+**해결**: 프로젝트 루트에 `.env` 파일을 생성하고 필요한 환경 변수를 설정하세요:
+```bash
+CMC_API_KEY=your_cmc_api_key_here
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+DATABASE_URL=sqlite:///./cryptowatcher.db
+HOST=0.0.0.0
+PORT=8000
+SCHEDULER_INTERVAL_MINUTES=5
+```
+
 ## 텔레그램 메시지가 오지 않는 경우
 
 ### 1. GitHub Actions 로그 확인
@@ -49,9 +93,14 @@ Actions 탭 → 워크플로우 실행 → 로그에서 다음을 확인:
 
 #### 로컬에서 테스트:
 ```bash
-cd /Users/joohansong/dev/coinmarketcap
-source venv/bin/activate
-python test_portfolio_monitor.py
+# 프로젝트 루트로 이동
+cd /path/to/coinmarketcap
+
+# 가상환경 활성화
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 테스트 실행
+python scripts/test_portfolio_monitor.py
 ```
 
 #### GitHub Actions에서 테스트:

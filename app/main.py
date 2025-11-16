@@ -63,8 +63,7 @@ async def lifespan(app: FastAPI):
     # 종료 시 정리
     if scheduler:
         scheduler.scheduler.shutdown()
-    if telegram_bot:
-        telegram_bot.application.stop()
+    # 봇은 daemon 스레드로 실행되므로 애플리케이션 종료 시 자동으로 종료됨
     logger.info("애플리케이션 종료")
 
 
