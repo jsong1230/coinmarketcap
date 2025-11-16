@@ -18,7 +18,8 @@ BASE_CURRENCY = os.getenv("BASE_CURRENCY", "KRW")
 
 # 포트폴리오 설정 (GitHub Secrets에서 가져오거나 여기에 직접 설정)
 # GitHub Secrets에 PORTFOLIO_JSON을 추가하거나 아래에 직접 입력
-PORTFOLIO_JSON = os.getenv("PORTFOLIO_JSON", '{"BTC": 4.4744, "ETH": 26.52, "SOL": 100.26, "META": 11325.73}')
+DEFAULT_PORTFOLIO = '{"BTC": 4.4744, "ETH": 26.52, "SOL": 100.26, "META": 11325.73}'
+PORTFOLIO_JSON = os.getenv("PORTFOLIO_JSON", DEFAULT_PORTFOLIO)
 
 CMC_BASE_URL = "https://pro-api.coinmarketcap.com/v1"
 
