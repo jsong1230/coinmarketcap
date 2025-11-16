@@ -8,6 +8,7 @@ import requests
 from telegram import Bot
 from datetime import datetime
 import json
+import asyncio
 
 # 환경 변수
 CMC_API_KEY = os.getenv("CMC_API_KEY")
@@ -93,14 +94,16 @@ def calculate_portfolio_value(portfolio, price_data):
     return total_value, items_summary
 
 
-def send_telegram_message(bot, chat_id, message):
+async def send_telegram_message(bot, chat_id, message):
     """텔레그램 메시지 전송"""
     try:
-        bot.send_message(chat_id=chat_id, text=message)
+        await bot.send_message(chat_id=chat_id, text=message)
         print("✅ 텔레그램 메시지 전송 완료")
         return True
     except Exception as e:
         print(f"❌ 텔레그램 전송 실패: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
@@ -109,6 +112,13 @@ def main():
     print("🚀 포트폴리오 모니터링 시작...")
     
     # 환경 변수 확인
+    print(f"🔍 환경 변수 확인:")
+    print(f"  CMC_API_KEY: {'설정됨' if CMC_API_KEY else '❌ 없음'}")
+    print(f"  TELEGRAM_BOT_TOKEN: {'설정됨' if TELEGRAM_BOT_TOKEN else '❌ 없음'}")
+    print(f"  TELEGRAM_CHAT_ID: {TELEGRAM_CHAT_ID if TELEGRAM_CHAT_ID else '❌ 없음'}")
+    print(f"  BASE_CURRENCY: {BASE_CURRENCY}")
+    print(f"  PORTFOLIO_JSON: {PORTFOLIO_JSON[:50]}..." if len(PORTFOLIO_JSON) > 50 else f"  PORTFOLIO_JSON: {PORTFOLIO_JSON}")
+    
     if not CMC_API_KEY:
         print("❌ CMC_API_KEY가 설정되지 않았습니다.")
         return
@@ -164,8 +174,11 @@ def main():
         message += f"   24h 변동: {item['change_24h']:+.2f}%\n\n"
     
     # 텔레그램 전송
-    bot = Bot(token=TELEGRAM_BOT_TOKEN)
-    send_telegram_message(bot, TELEGRAM_CHAT_ID, message)
+    async def send_message():
+        bot = Bot(token=TELEGRAM_BOT_TOKEN)
+        await send_telegram_message(bot, TELEGRAM_CHAT_ID, message)
+    
+    asyncio.run(send_message())
     
     print("✅ 모니터링 완료")
 

@@ -29,6 +29,7 @@ jobs:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         BASE_CURRENCY: ${{ secrets.BASE_CURRENCY || 'KRW' }}
+        PORTFOLIO_JSON: ${{ secrets.PORTFOLIO_JSON || '{"BTC": 4.4744, "ETH": 26.52, "SOL": 100.26, "META": 11325.73}' }}
       run: |
         python .github/scripts/portfolio_monitor.py
 
