@@ -98,11 +98,24 @@ def calculate_portfolio_value(portfolio, price_data):
 async def send_telegram_message(bot, chat_id, message):
     """텔레그램 메시지 전송"""
     try:
-        await bot.send_message(chat_id=chat_id, text=message)
-        print("✅ 텔레그램 메시지 전송 완료")
+        # chat_id를 정수로 변환 시도
+        try:
+            chat_id_int = int(chat_id)
+        except ValueError:
+            chat_id_int = chat_id
+        
+        print(f"   메시지 전송 시도: chat_id={chat_id_int} (type: {type(chat_id_int).__name__})")
+        
+        # 메시지 전송
+        sent_message = await bot.send_message(chat_id=chat_id_int, text=message)
+        
+        print(f"✅ 텔레그램 메시지 전송 완료!")
+        print(f"   메시지 ID: {sent_message.message_id}")
+        print(f"   채팅 ID: {sent_message.chat.id}")
         return True
     except Exception as e:
         print(f"❌ 텔레그램 전송 실패: {e}")
+        print(f"   오류 타입: {type(e).__name__}")
         import traceback
         traceback.print_exc()
         return False
@@ -176,8 +189,9 @@ def main():
     
     # 텔레그램 전송
     print(f"📤 텔레그램 메시지 전송 시도...")
-    print(f"   Chat ID: {TELEGRAM_CHAT_ID}")
+    print(f"   Chat ID: {TELEGRAM_CHAT_ID} (type: {type(TELEGRAM_CHAT_ID).__name__})")
     print(f"   메시지 길이: {len(message)} 글자")
+    print(f"   메시지 미리보기: {message[:100]}...")
     
     async def send_message():
         try:
@@ -187,8 +201,21 @@ def main():
             # 봇 정보 확인
             bot_info = await bot.get_me()
             print(f"   봇 이름: {bot_info.first_name} (@{bot_info.username})")
+            print(f"   봇 ID: {bot_info.id}")
+            
+            # Chat 정보 확인 시도
+            try:
+                chat_id_int = int(TELEGRAM_CHAT_ID)
+                chat = await bot.get_chat(chat_id_int)
+                print(f"   채팅 정보 확인:")
+                print(f"     - Chat ID: {chat.id}")
+                print(f"     - 타입: {chat.type}")
+                print(f"     - 이름: {chat.first_name or ''} {chat.last_name or ''}")
+            except Exception as e:
+                print(f"   ⚠️ 채팅 정보 확인 실패 (무시하고 계속): {e}")
             
             # 메시지 전송
+            print(f"   메시지 전송 시작...")
             result = await send_telegram_message(bot, TELEGRAM_CHAT_ID, message)
             return result
         except Exception as e:
