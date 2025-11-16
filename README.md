@@ -48,6 +48,8 @@ alembic upgrade head
 
 ## 실행
 
+### 서버 실행 (API 서버)
+
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
@@ -56,6 +58,26 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```bash
 ./scripts/start_server.sh
 ```
+
+### 로컬 모니터링 (백그라운드)
+
+포트폴리오를 자동으로 모니터링하고 텔레그램 알림을 받으려면:
+
+```bash
+./scripts/start_monitor.sh
+```
+
+상태 확인:
+```bash
+./scripts/status_monitor.sh
+```
+
+중지:
+```bash
+./scripts/stop_monitor.sh
+```
+
+자세한 내용은 [로컬 모니터링 가이드](docs/LOCAL_MONITORING.md)를 참조하세요.
 
 ## 텔레그램 명령어
 
