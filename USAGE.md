@@ -86,7 +86,7 @@ curl -X POST "http://localhost:8000/api/users" \
   -H "Content-Type: application/json" \
   -d '{
     "telegram_chat_id": "123456789",
-    "cmc_api_key": "REMOVED_SECRET",
+    "cmc_api_key": "your_cmc_api_key_here",
     "base_currency": "USD"
   }'
 

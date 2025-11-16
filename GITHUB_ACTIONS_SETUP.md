@@ -30,10 +30,10 @@ GitHub Actions에서 테스트를 실행하려면 Secrets를 설정해야 합니
 
 #### 필수 Secrets:
 - `CMC_API_KEY`: CoinMarketCap API 키
-  - 값: `REMOVED_SECRET`
+  - 값: `your_cmc_api_key_here` (실제 API 키 입력)
   
 - `TELEGRAM_BOT_TOKEN`: 텔레그램 봇 토큰
-  - 값: `REMOVED_SECRET`
+  - 값: `your_telegram_bot_token_here` (실제 토큰 입력)
 
 ### Secrets 추가 후:
 - GitHub Actions가 자동으로 실행됩니다
