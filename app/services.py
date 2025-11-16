@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from typing import Dict, List, Optional
 from app.models import User, PortfolioItem, AlertSettings, PriceSnapshot
 from app.cmc_client import CMCClient
+from app.utils import aggregate_portfolio_items, calculate_percentage_change
 from datetime import datetime, timedelta
 import logging
 
@@ -28,16 +29,7 @@ class PortfolioService:
             return None
         
         # 중복 제거: 같은 심볼은 수량 합산
-        from collections import defaultdict
-        aggregated_items = defaultdict(float)
-        item_ids = {}
-        
-        for item in portfolio_items:
-            aggregated_items[item.symbol] += item.quantity
-            # 가장 최근 항목의 ID 사용
-            item_ids[item.symbol] = item.id
-        
-        # 고유 심볼 리스트
+        aggregated_items, item_ids = aggregate_portfolio_items(portfolio_items)
         symbols = list(aggregated_items.keys())
         
         # CMC API로 가격 조회
@@ -135,7 +127,7 @@ class AlertService:
         
         # 포트폴리오 전체 변동 확인
         if old_total > 0:
-            portfolio_change_pct = ((new_total - old_total) / old_total) * 100
+            portfolio_change_pct = calculate_percentage_change(old_total, new_total)
             
             if abs(portfolio_change_pct) >= alert_settings.portfolio_percentage_threshold:
                 alerts.append({
@@ -159,7 +151,7 @@ class AlertService:
             old_price = old_price_data.get("price", 0)
             
             if old_price > 0:
-                price_change_pct = ((new_price - old_price) / old_price) * 100
+                price_change_pct = calculate_percentage_change(old_price, new_price)
                 
                 if abs(price_change_pct) >= alert_settings.single_coin_percentage_threshold:
                     alerts.append({

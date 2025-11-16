@@ -1,11 +1,11 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models import User
 from app.services import PortfolioService, AlertService
 from app.telegram_bot import TelegramBot
 from app.config import settings
+from app.utils import format_portfolio_message
 import logging
 from telegram import Bot
 
@@ -88,22 +88,12 @@ class MonitoringScheduler:
                         continue
                     
                     # 포트폴리오 요약 메시지 생성
-                    message = f"📊 포트폴리오 요약 ({user.base_currency})\n\n"
-                    message += f"총 평가액: {summary['total_value']:,.0f} {user.base_currency}\n\n"
-                    
-                    for item in summary['items']:
-                        symbol = item['symbol']
-                        quantity = item['quantity']
-                        price_info = summary['price_data'].get(symbol, {})
-                        price = price_info.get('price', 0)
-                        value = quantity * price
-                        change_24h = price_info.get('percent_change_24h', 0)
-                        
-                        message += f"💰 {symbol}\n"
-                        message += f"   수량: {quantity:,.6f}\n"
-                        message += f"   현재가: {price:,.2f} {user.base_currency}\n"
-                        message += f"   평가액: {value:,.2f} {user.base_currency}\n"
-                        message += f"   24h 변동: {change_24h:+.2f}%\n\n"
+                    message = format_portfolio_message(
+                        total_value=summary['total_value'],
+                        base_currency=user.base_currency,
+                        items=summary['items'],
+                        price_data=summary['price_data']
+                    )
                     
                     try:
                         await self.bot.send_message(

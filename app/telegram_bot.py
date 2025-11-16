@@ -1,11 +1,11 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
+from telegram import Update
+from telegram.ext import Application, CommandHandler, ContextTypes
 from typing import Optional
 from app.config import settings
 from app.database import SessionLocal
-from app.models import User, PortfolioItem, AlertSettings
-from app.cmc_client import CMCClient
-from app.services import PortfolioService, AlertService
+from app.models import User, AlertSettings
+from app.services import PortfolioService
+from app.utils import format_portfolio_message
 import logging
 
 logger = logging.getLogger(__name__)

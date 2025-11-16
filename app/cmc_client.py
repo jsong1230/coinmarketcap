@@ -1,6 +1,9 @@
 import requests
 from typing import Dict, List, Optional
 from app.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class CMCClient:
@@ -34,10 +37,14 @@ class CMCClient:
         }
         
         try:
-            response = requests.get(url, headers=self.headers, params=params)
+            response = requests.get(url, headers=self.headers, params=params, timeout=10)
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.Timeout:
+            logger.error("CMC API 요청 타임아웃")
+            raise Exception("CMC API 요청 타임아웃: 서버 응답이 없습니다.")
         except requests.exceptions.RequestException as e:
+            logger.error(f"CMC API 요청 실패: {e}")
             raise Exception(f"CMC API 요청 실패: {str(e)}")
     
     def get_portfolio_data(self, portfolio_id: str, convert: str = "USD") -> Dict:
@@ -55,10 +62,14 @@ class CMCClient:
         params = {"convert": convert}
         
         try:
-            response = requests.get(url, headers=self.headers, params=params)
+            response = requests.get(url, headers=self.headers, params=params, timeout=10)
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.Timeout:
+            logger.error("CMC 포트폴리오 조회 타임아웃")
+            raise Exception("CMC 포트폴리오 조회 타임아웃: 서버 응답이 없습니다.")
         except requests.exceptions.RequestException as e:
+            logger.error(f"CMC 포트폴리오 조회 실패: {e}")
             raise Exception(f"CMC 포트폴리오 조회 실패: {str(e)}")
     
     def parse_quote_data(self, response_data: Dict, symbol: str, convert: str = "USD") -> Optional[Dict]:

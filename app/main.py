@@ -13,7 +13,7 @@ from app.schemas import (
     AlertSettingsCreate, AlertSettingsResponse,
     PortfolioSummaryResponse
 )
-from typing import Dict
+from typing import Dict, List
 from app.services import PortfolioService, AlertService
 from app.telegram_bot import TelegramBot
 from app.scheduler import MonitoringScheduler
