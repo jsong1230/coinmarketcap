@@ -58,6 +58,8 @@ alembic upgrade head
 
 ### 서버 실행 (API 서버)
 
+#### 포그라운드 실행 (개발용)
+
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
@@ -69,6 +71,32 @@ chmod +x scripts/start_server.sh  # 처음 한 번만 실행
 ```
 
 **참고**: 스크립트는 자동으로 프로젝트 루트를 찾고 가상환경을 활성화합니다.
+
+#### 백그라운드 실행 (프로덕션용)
+
+서버를 백그라운드에서 실행하려면:
+
+```bash
+chmod +x scripts/start_server_background.sh  # 처음 한 번만 실행
+./scripts/start_server_background.sh
+```
+
+서버 상태 확인:
+```bash
+./scripts/status_server.sh
+```
+
+서버 종료:
+```bash
+./scripts/stop_server.sh
+```
+
+로그 확인:
+```bash
+tail -f logs/server.log
+```
+
+**참고**: 백그라운드 실행 시 `--reload` 옵션이 비활성화됩니다. 코드 변경 시 서버를 재시작해야 합니다.
 
 ### 로컬 모니터링 (백그라운드)
 

@@ -54,4 +54,5 @@ cryptowatcher.db
 
 # Monitor
 monitor.pid
+server.pid
 
