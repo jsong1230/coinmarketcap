@@ -52,3 +52,6 @@ server.log
 test.db
 cryptowatcher.db
 
+# Monitor
+monitor.pid
+
