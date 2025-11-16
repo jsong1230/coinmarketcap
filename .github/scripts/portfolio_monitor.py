@@ -13,7 +13,7 @@ import asyncio
 # 환경 변수
 CMC_API_KEY = os.getenv("CMC_API_KEY")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "57364261")  # 기본값 설정
 BASE_CURRENCY = os.getenv("BASE_CURRENCY", "KRW")
 
 # 포트폴리오 설정 (GitHub Secrets에서 가져오거나 여기에 직접 설정)
@@ -175,13 +175,38 @@ def main():
         message += f"   24h 변동: {item['change_24h']:+.2f}%\n\n"
     
     # 텔레그램 전송
+    print(f"📤 텔레그램 메시지 전송 시도...")
+    print(f"   Chat ID: {TELEGRAM_CHAT_ID}")
+    print(f"   메시지 길이: {len(message)} 글자")
+    
     async def send_message():
-        bot = Bot(token=TELEGRAM_BOT_TOKEN)
-        await send_telegram_message(bot, TELEGRAM_CHAT_ID, message)
+        try:
+            bot = Bot(token=TELEGRAM_BOT_TOKEN)
+            print(f"   봇 초기화 완료")
+            
+            # 봇 정보 확인
+            bot_info = await bot.get_me()
+            print(f"   봇 이름: {bot_info.first_name} (@{bot_info.username})")
+            
+            # 메시지 전송
+            result = await send_telegram_message(bot, TELEGRAM_CHAT_ID, message)
+            return result
+        except Exception as e:
+            print(f"❌ 텔레그램 전송 중 오류: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
     
-    asyncio.run(send_message())
-    
-    print("✅ 모니터링 완료")
+    try:
+        result = asyncio.run(send_message())
+        if result:
+            print("✅ 모니터링 완료")
+        else:
+            print("⚠️ 모니터링 완료 (전송 실패)")
+    except Exception as e:
+        print(f"❌ 실행 중 오류: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
