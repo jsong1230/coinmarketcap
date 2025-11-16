@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import Mock, patch
+import requests
 from app.cmc_client import CMCClient
 
 
@@ -37,7 +38,7 @@ def test_get_latest_quotes_success(mock_get):
 
 @patch("app.cmc_client.requests.get")
 def test_get_latest_quotes_failure(mock_get):
-    mock_get.side_effect = Exception("API Error")
+    mock_get.side_effect = requests.exceptions.RequestException("API Error")
     
     client = CMCClient(api_key="test_key")
     

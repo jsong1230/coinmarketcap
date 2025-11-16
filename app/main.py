@@ -116,13 +116,13 @@ async def create_user(user_data: UserCreate, db: Session = Depends(get_db)):
         base_currency=user_data.base_currency
     )
     db.add(new_user)
-    
-    # 기본 알림 설정 생성
-    alert_settings = AlertSettings(user_id=new_user.id)
-    db.add(alert_settings)
-    
     db.commit()
     db.refresh(new_user)
+    
+    # 기본 알림 설정 생성 (user_id가 생성된 후)
+    alert_settings = AlertSettings(user_id=new_user.id)
+    db.add(alert_settings)
+    db.commit()
     
     return new_user
 
