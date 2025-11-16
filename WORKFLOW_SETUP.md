@@ -94,8 +94,8 @@ git push origin main
 1. 저장소 → **Settings** → **Secrets and variables** → **Actions**
 2. **New repository secret** 클릭
 3. 다음 Secrets 추가:
-   - `CMC_API_KEY`: `REMOVED_SECRET`
-   - `TELEGRAM_BOT_TOKEN`: `REMOVED_SECRET`
+   - `CMC_API_KEY`: `your_cmc_api_key_here` (실제 API 키 입력)
+   - `TELEGRAM_BOT_TOKEN`: `your_telegram_bot_token_here` (실제 토큰 입력)
 
 ## 확인
 
