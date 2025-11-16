@@ -13,6 +13,7 @@ from app.schemas import (
     AlertSettingsCreate, AlertSettingsResponse,
     PortfolioSummaryResponse
 )
+from typing import Dict
 from app.services import PortfolioService, AlertService
 from app.telegram_bot import TelegramBot
 from app.scheduler import MonitoringScheduler
@@ -136,6 +137,30 @@ async def get_user(telegram_chat_id: str, db: Session = Depends(get_db)):
     return user
 
 
+@app.put("/api/users/{telegram_chat_id}", response_model=UserResponse)
+async def update_user(
+    telegram_chat_id: str,
+    user_data: UserCreate,
+    db: Session = Depends(get_db)
+):
+    """사용자 정보 업데이트"""
+    user = db.query(User).filter(User.telegram_chat_id == telegram_chat_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+    
+    if user_data.cmc_api_key:
+        user.cmc_api_key = user_data.cmc_api_key
+    if user_data.cmc_portfolio_id:
+        user.cmc_portfolio_id = user_data.cmc_portfolio_id
+    if user_data.base_currency:
+        user.base_currency = user_data.base_currency
+    
+    db.commit()
+    db.refresh(user)
+    
+    return user
+
+
 # 포트폴리오 관련 API
 @app.post("/api/portfolio", response_model=PortfolioItemResponse)
 async def add_portfolio_item(
@@ -175,6 +200,43 @@ async def get_portfolio_summary(
         raise HTTPException(status_code=404, detail="포트폴리오가 설정되지 않았습니다.")
     
     return summary
+
+
+@app.delete("/api/portfolio/cleanup", response_model=Dict)
+async def cleanup_duplicate_portfolio_items(
+    telegram_chat_id: str,
+    db: Session = Depends(get_db)
+):
+    """중복 포트폴리오 항목 정리 (같은 심볼은 하나만 유지)"""
+    user = db.query(User).filter(User.telegram_chat_id == telegram_chat_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+    
+    from collections import defaultdict
+    from app.models import PortfolioItem
+    
+    portfolio_items = db.query(PortfolioItem).filter(
+        PortfolioItem.user_id == user.id
+    ).order_by(PortfolioItem.id).all()
+    
+    # 심볼별로 첫 번째 항목만 유지하고 나머지 삭제
+    seen_symbols = set()
+    deleted_count = 0
+    
+    for item in portfolio_items:
+        if item.symbol in seen_symbols:
+            db.delete(item)
+            deleted_count += 1
+        else:
+            seen_symbols.add(item.symbol)
+    
+    db.commit()
+    
+    return {
+        "message": "중복 항목 정리 완료",
+        "deleted_count": deleted_count,
+        "remaining_items": len(seen_symbols)
+    }
 
 
 # 알림 설정 관련 API

@@ -75,12 +75,19 @@ class CMCClient:
         """
         try:
             data = response_data.get("data", {})
-            coin_data = data.get(symbol, [])
+            coin_data = data.get(symbol)
             
             if not coin_data:
                 return None
             
-            quote = coin_data[0].get("quote", {}).get(convert, {})
+            # coin_data가 딕셔너리인 경우 (단일 심볼 조회)
+            if isinstance(coin_data, dict):
+                quote = coin_data.get("quote", {}).get(convert, {})
+            # coin_data가 리스트인 경우 (다중 심볼 조회)
+            elif isinstance(coin_data, list) and len(coin_data) > 0:
+                quote = coin_data[0].get("quote", {}).get(convert, {})
+            else:
+                return None
             
             return {
                 "symbol": symbol,

@@ -27,7 +27,18 @@ class PortfolioService:
         if not portfolio_items:
             return None
         
-        symbols = [item.symbol for item in portfolio_items]
+        # 중복 제거: 같은 심볼은 수량 합산
+        from collections import defaultdict
+        aggregated_items = defaultdict(float)
+        item_ids = {}
+        
+        for item in portfolio_items:
+            aggregated_items[item.symbol] += item.quantity
+            # 가장 최근 항목의 ID 사용
+            item_ids[item.symbol] = item.id
+        
+        # 고유 심볼 리스트
+        symbols = list(aggregated_items.keys())
         
         # CMC API로 가격 조회
         cmc_client = CMCClient(user.cmc_api_key)
@@ -40,10 +51,10 @@ class PortfolioService:
                 if price_info:
                     price_data[symbol] = price_info
             
-            # 총 평가액 계산
+            # 총 평가액 계산 (중복 제거된 수량 사용)
             total_value = sum(
-                item.quantity * price_data.get(item.symbol, {}).get("price", 0)
-                for item in portfolio_items
+                aggregated_items[symbol] * price_data.get(symbol, {}).get("price", 0)
+                for symbol in symbols
             )
             
             return {
@@ -51,11 +62,11 @@ class PortfolioService:
                 "base_currency": user.base_currency,
                 "items": [
                     {
-                        "id": item.id,
-                        "symbol": item.symbol,
-                        "quantity": item.quantity
+                        "id": item_ids[symbol],
+                        "symbol": symbol,
+                        "quantity": aggregated_items[symbol]
                     }
-                    for item in portfolio_items
+                    for symbol in symbols
                 ],
                 "price_data": price_data
             }
