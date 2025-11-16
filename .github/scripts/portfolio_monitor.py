@@ -127,11 +127,20 @@ def main():
     
     # 환경 변수 확인
     print(f"🔍 환경 변수 확인:")
-    print(f"  CMC_API_KEY: {'설정됨' if CMC_API_KEY else '❌ 없음'}")
-    print(f"  TELEGRAM_BOT_TOKEN: {'설정됨' if TELEGRAM_BOT_TOKEN else '❌ 없음'}")
-    print(f"  TELEGRAM_CHAT_ID: {TELEGRAM_CHAT_ID if TELEGRAM_CHAT_ID else '❌ 없음'}")
+    print(f"  CMC_API_KEY: {'✅ 설정됨 (' + CMC_API_KEY[:10] + '...)' if CMC_API_KEY else '❌ 없음'}")
+    print(f"  TELEGRAM_BOT_TOKEN: {'✅ 설정됨 (' + TELEGRAM_BOT_TOKEN[:10] + '...)' if TELEGRAM_BOT_TOKEN else '❌ 없음'}")
+    print(f"  TELEGRAM_CHAT_ID: {TELEGRAM_CHAT_ID if TELEGRAM_CHAT_ID else '❌ 없음'} (type: {type(TELEGRAM_CHAT_ID).__name__})")
     print(f"  BASE_CURRENCY: {BASE_CURRENCY}")
     print(f"  PORTFOLIO_JSON: {PORTFOLIO_JSON[:50]}..." if len(PORTFOLIO_JSON) > 50 else f"  PORTFOLIO_JSON: {PORTFOLIO_JSON}")
+    print()
+    
+    # GitHub Actions 환경 확인
+    is_github_actions = os.getenv("GITHUB_ACTIONS") == "true"
+    print(f"🌐 실행 환경: {'GitHub Actions' if is_github_actions else '로컬'}")
+    if is_github_actions:
+        print(f"  Workflow: {os.getenv('GITHUB_WORKFLOW', 'N/A')}")
+        print(f"  Run ID: {os.getenv('GITHUB_RUN_ID', 'N/A')}")
+    print()
     
     if not CMC_API_KEY:
         print("❌ CMC_API_KEY가 설정되지 않았습니다.")
@@ -206,13 +215,19 @@ def main():
             # Chat 정보 확인 시도
             try:
                 chat_id_int = int(TELEGRAM_CHAT_ID)
+                print(f"   채팅 정보 확인 시도: chat_id={chat_id_int}")
                 chat = await bot.get_chat(chat_id_int)
-                print(f"   채팅 정보 확인:")
+                print(f"   ✅ 채팅 정보 확인 성공:")
                 print(f"     - Chat ID: {chat.id}")
                 print(f"     - 타입: {chat.type}")
                 print(f"     - 이름: {chat.first_name or ''} {chat.last_name or ''}")
-            except Exception as e:
-                print(f"   ⚠️ 채팅 정보 확인 실패 (무시하고 계속): {e}")
+                print(f"     - 사용자명: @{chat.username or '없음'}")
+            except Exception as chat_error:
+                print(f"   ⚠️ 채팅 정보 확인 실패:")
+                print(f"     오류: {chat_error}")
+                print(f"     오류 타입: {type(chat_error).__name__}")
+                print(f"     ⚠️ 이 경우 메시지 전송이 실패할 수 있습니다.")
+                print(f"     해결: 텔레그램에서 봇에게 먼저 /start 메시지를 보내세요.")
             
             # 메시지 전송
             print(f"   메시지 전송 시작...")
