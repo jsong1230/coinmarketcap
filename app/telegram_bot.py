@@ -1,0 +1,193 @@
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
+from typing import Optional
+from app.config import settings
+from app.database import SessionLocal
+from app.models import User, PortfolioItem, AlertSettings
+from app.cmc_client import CMCClient
+from app.services import PortfolioService, AlertService
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class TelegramBot:
+    """텔레그램 봇 핸들러"""
+    
+    def __init__(self):
+        self.application = Application.builder().token(settings.telegram_bot_token).build()
+        self.setup_handlers()
+    
+    def setup_handlers(self):
+        """명령어 핸들러 등록"""
+        self.application.add_handler(CommandHandler("start", self.start_command))
+        self.application.add_handler(CommandHandler("summary", self.summary_command))
+        self.application.add_handler(CommandHandler("alerts", self.alerts_command))
+        self.application.add_handler(CommandHandler("set_alert", self.set_alert_command))
+        self.application.add_handler(CommandHandler("advice", self.advice_command))
+        self.application.add_handler(CommandHandler("help", self.help_command))
+    
+    async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """봇 시작 및 사용자 등록"""
+        chat_id = str(update.effective_chat.id)
+        db = SessionLocal()
+        
+        try:
+            user = db.query(User).filter(User.telegram_chat_id == chat_id).first()
+            
+            if user:
+                await update.message.reply_text(
+                    f"안녕하세요! 이미 등록된 사용자입니다.\n"
+                    f"사용자 ID: {user.id}\n"
+                    f"기준 통화: {user.base_currency}\n\n"
+                    f"/help 명령어로 사용 가능한 기능을 확인하세요."
+                )
+            else:
+                # 새 사용자 생성
+                new_user = User(
+                    telegram_chat_id=chat_id,
+                    base_currency="USD"
+                )
+                db.add(new_user)
+                
+                # 기본 알림 설정 생성
+                alert_settings = AlertSettings(
+                    user_id=new_user.id
+                )
+                db.add(alert_settings)
+                db.commit()
+                
+                await update.message.reply_text(
+                    "🎉 CryptoWatcher Bot에 오신 것을 환영합니다!\n\n"
+                    "다음 단계:\n"
+                    "1. CMC API Key를 설정하세요 (/set_cmc_key)\n"
+                    "2. 포트폴리오를 등록하세요 (/set_portfolio)\n"
+                    "3. 알림 기준을 설정하세요 (/set_alert)\n\n"
+                    "/help 명령어로 모든 기능을 확인하세요."
+                )
+        except Exception as e:
+            logger.error(f"start_command 오류: {e}")
+            await update.message.reply_text("오류가 발생했습니다. 나중에 다시 시도해주세요.")
+        finally:
+            db.close()
+    
+    async def summary_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """포트폴리오 요약 조회"""
+        chat_id = str(update.effective_chat.id)
+        db = SessionLocal()
+        
+        try:
+            user = db.query(User).filter(User.telegram_chat_id == chat_id).first()
+            
+            if not user:
+                await update.message.reply_text("먼저 /start 명령어로 등록해주세요.")
+                return
+            
+            service = PortfolioService(db)
+            summary = service.get_portfolio_summary(user.id)
+            
+            if not summary:
+                await update.message.reply_text(
+                    "포트폴리오가 설정되지 않았습니다.\n"
+                    "포트폴리오를 등록하려면 /set_portfolio 명령어를 사용하세요."
+                )
+                return
+            
+            message = f"📊 포트폴리오 요약\n\n"
+            message += f"총 평가액: {summary['total_value']:,.2f} {user.base_currency}\n\n"
+            
+            for item in summary['items']:
+                price_info = summary['price_data'].get(item['symbol'], {})
+                price = price_info.get('price', 0)
+                value = item['quantity'] * price
+                change_24h = price_info.get('percent_change_24h', 0)
+                
+                message += f"💰 {item['symbol']}\n"
+                message += f"   수량: {item['quantity']:.6f}\n"
+                message += f"   가격: ${price:,.2f}\n"
+                message += f"   평가액: {value:,.2f} {user.base_currency}\n"
+                message += f"   24h 변동: {change_24h:+.2f}%\n\n"
+            
+            await update.message.reply_text(message)
+        except Exception as e:
+            logger.error(f"summary_command 오류: {e}")
+            await update.message.reply_text("포트폴리오 조회 중 오류가 발생했습니다.")
+        finally:
+            db.close()
+    
+    async def alerts_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """현재 알림 설정 조회"""
+        chat_id = str(update.effective_chat.id)
+        db = SessionLocal()
+        
+        try:
+            user = db.query(User).filter(User.telegram_chat_id == chat_id).first()
+            
+            if not user:
+                await update.message.reply_text("먼저 /start 명령어로 등록해주세요.")
+                return
+            
+            alert_settings = db.query(AlertSettings).filter(AlertSettings.user_id == user.id).first()
+            
+            if not alert_settings:
+                await update.message.reply_text("알림 설정이 없습니다. /set_alert 명령어로 설정하세요.")
+                return
+            
+            message = "🔔 알림 설정\n\n"
+            message += f"단일 코인 변동률 임계값: {alert_settings.single_coin_percentage_threshold}%\n"
+            if alert_settings.single_coin_absolute_threshold:
+                message += f"단일 코인 절대가격 변동: {alert_settings.single_coin_absolute_threshold}\n"
+            message += f"포트폴리오 변동률 임계값: {alert_settings.portfolio_percentage_threshold}%\n"
+            if alert_settings.portfolio_absolute_threshold:
+                message += f"포트폴리오 절대금액 변동: {alert_settings.portfolio_absolute_threshold}\n"
+            message += f"최소 알림 간격: {alert_settings.min_notification_interval_minutes}분\n"
+            
+            await update.message.reply_text(message)
+        except Exception as e:
+            logger.error(f"alerts_command 오류: {e}")
+            await update.message.reply_text("알림 설정 조회 중 오류가 발생했습니다.")
+        finally:
+            db.close()
+    
+    async def set_alert_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """알림 기준 설정"""
+        await update.message.reply_text(
+            "알림 설정은 API를 통해 변경할 수 있습니다.\n"
+            "자세한 내용은 /help 명령어를 참조하세요."
+        )
+    
+    async def advice_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """투자 조언 요청"""
+        await update.message.reply_text(
+            "📈 투자 조언 기능은 곧 추가될 예정입니다.\n"
+            "현재는 포트폴리오 모니터링과 알림 기능을 사용하실 수 있습니다."
+        )
+    
+    async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """도움말"""
+        help_text = """
+🤖 CryptoWatcher Bot 명령어
+
+/start - 봇 시작 및 사용자 등록
+/summary - 포트폴리오 요약 조회
+/alerts - 현재 알림 설정 조회
+/set_alert - 알림 기준 설정 (API 사용)
+/advice - 투자 조언 요청
+/help - 이 도움말 표시
+
+📡 API 엔드포인트:
+- POST /api/users - 사용자 등록
+- GET /api/users/me - 내 정보 조회
+- POST /api/portfolio - 포트폴리오 항목 추가
+- GET /api/portfolio/summary - 포트폴리오 요약
+- PUT /api/alerts - 알림 설정 변경
+
+자세한 API 문서는 /docs 엔드포인트를 참조하세요.
+        """
+        await update.message.reply_text(help_text)
+    
+    def run(self):
+        """봇 실행"""
+        logger.info("텔레그램 봇 시작...")
+        self.application.run_polling(allowed_updates=Update.ALL_TYPES)
+
