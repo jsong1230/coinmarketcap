@@ -1,6 +1,6 @@
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
-from telegram.error import Conflict
+from telegram.error import Conflict, TimedOut, NetworkError
 from typing import Optional
 from app.config import settings
 from app.database import SessionLocal
@@ -37,6 +37,26 @@ class TelegramBot:
         self.application.add_handler(CommandHandler("set_alert", self.set_alert_command))
         self.application.add_handler(CommandHandler("advice", self.advice_command))
         self.application.add_handler(CommandHandler("help", self.help_command))
+        
+        # 에러 핸들러 등록
+        self.application.add_error_handler(self.error_handler)
+    
+    async def error_handler(self, update: object, context: ContextTypes.DEFAULT_TYPE):
+        """에러 핸들러"""
+        error = context.error
+        
+        if isinstance(error, Conflict):
+            logger.warning(
+                f"봇 충돌 감지: 다른 봇 인스턴스가 실행 중입니다. "
+                f"이 오류는 무시됩니다. (다른 프로세스를 종료하거나 잠시 기다려주세요)"
+            )
+            # Conflict 오류는 무시하고 계속 실행
+            return
+        elif isinstance(error, (TimedOut, NetworkError)):
+            logger.warning(f"네트워크 오류 (재시도됨): {error}")
+            return
+        else:
+            logger.error(f"예상치 못한 오류: {error}", exc_info=error)
     
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """봇 시작 및 사용자 등록"""
@@ -197,52 +217,30 @@ class TelegramBot:
         asyncio.set_event_loop(loop)
         
         try:
-            max_retries = 3
-            retry_count = 0
-            
-            while retry_count < max_retries:
+            # webhook 삭제 (이전 webhook이 있으면 충돌 발생)
+            async def delete_webhook():
                 try:
-                    # webhook 삭제 (이전 webhook이 있으면 충돌 발생)
-                    async def delete_webhook():
-                        try:
-                            await self.application.bot.delete_webhook(drop_pending_updates=True)
-                            logger.info("Webhook 삭제 완료")
-                            # webhook 삭제 후 잠시 대기 (다른 인스턴스가 종료될 시간 제공)
-                            await asyncio.sleep(2)
-                        except Exception as e:
-                            logger.warning(f"Webhook 삭제 중 오류 (무시 가능): {e}")
-                    
-                    loop.run_until_complete(delete_webhook())
-                    
-                    # run_polling은 무한 루프로 실행되므로 run_until_complete로 감싸면 계속 실행됨
-                    # stop_signals=None으로 시그널 핸들러 비활성화 (별도 스레드에서는 사용 불가)
-                    loop.run_until_complete(
-                        self.application.run_polling(
-                            allowed_updates=Update.ALL_TYPES,
-                            stop_signals=None,  # 시그널 핸들러 비활성화
-                            drop_pending_updates=True
-                        )
-                    )
-                    # 성공적으로 실행되면 루프 종료
-                    break
-                    
-                except Conflict as e:
-                    retry_count += 1
-                    if retry_count < max_retries:
-                        wait_time = retry_count * 5  # 5초, 10초, 15초 대기
-                        logger.warning(
-                            f"봇 충돌 감지 (재시도 {retry_count}/{max_retries}): "
-                            f"다른 인스턴스가 실행 중입니다. {wait_time}초 후 재시도합니다."
-                        )
-                        time.sleep(wait_time)
-                    else:
-                        logger.error(
-                            f"봇 충돌 오류: 다른 봇 인스턴스가 실행 중입니다. "
-                            f"다른 프로세스를 종료하거나 잠시 기다린 후 다시 시도하세요."
-                        )
+                    await self.application.bot.delete_webhook(drop_pending_updates=True)
+                    logger.info("Webhook 삭제 완료")
+                    # webhook 삭제 후 잠시 대기 (다른 인스턴스가 종료될 시간 제공)
+                    await asyncio.sleep(3)
                 except Exception as e:
-                    logger.error(f"텔레그램 봇 실행 중 오류: {e}", exc_info=True)
-                    break
+                    logger.warning(f"Webhook 삭제 중 오류 (무시 가능): {e}")
+            
+            loop.run_until_complete(delete_webhook())
+            
+            # run_polling은 무한 루프로 실행되므로 run_until_complete로 감싸면 계속 실행됨
+            # stop_signals=None으로 시그널 핸들러 비활성화 (별도 스레드에서는 사용 불가)
+            # 에러 핸들러가 Conflict 오류를 처리하므로 여기서는 그냥 실행
+            loop.run_until_complete(
+                self.application.run_polling(
+                    allowed_updates=Update.ALL_TYPES,
+                    stop_signals=None,  # 시그널 핸들러 비활성화
+                    drop_pending_updates=True
+                )
+            )
+        except Exception as e:
+            logger.error(f"텔레그램 봇 실행 중 오류: {e}", exc_info=True)
         finally:
             loop.close()
 
