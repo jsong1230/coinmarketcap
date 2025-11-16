@@ -1,10 +1,10 @@
 name: Portfolio Monitor
 
 on:
-  schedule:
-    # 1시간마다 실행 (UTC 기준)
-    - cron: '0 * * * *'
-  workflow_dispatch: # 수동 실행도 가능
+  # schedule:
+  #   # 1시간마다 실행 (UTC 기준)
+  #   - cron: '0 * * * *'
+  workflow_dispatch: # 수동 실행만 가능
 
 jobs:
   monitor:
