@@ -47,6 +47,26 @@ def format_currency(value: float, currency: str = "USD") -> str:
         return f"{value:,.2f}"
 
 
+def format_price(value: float, currency: str = "USD") -> str:
+    """
+    가격 포맷팅 (통화 심볼 포함)
+    
+    Args:
+        value: 가격
+        currency: 통화 코드
+    
+    Returns:
+        포맷팅된 문자열
+    """
+    formatted = format_currency(value, currency)
+    if currency == "USD":
+        return f"${formatted}"
+    elif currency == "KRW":
+        return f"₩{formatted}"
+    else:
+        return f"{formatted} {currency}"
+
+
 def format_portfolio_message(
     total_value: float,
     base_currency: str,
@@ -86,8 +106,8 @@ def format_portfolio_message(
         
         message += f"💵 {symbol}\n"
         message += f"   수량: {quantity:,.6f}\n"
-        message += f"   현재가: {format_currency(price, base_currency)} {base_currency}\n"
-        message += f"   평가액: {format_currency(value, base_currency)} {base_currency}\n"
+        message += f"   현재가: {format_price(price, base_currency)}\n"
+        message += f"   평가액: {format_price(value, base_currency)}\n"
         message += f"   24h 변동: {change_24h:+.2f}%\n\n"
     
     return message
