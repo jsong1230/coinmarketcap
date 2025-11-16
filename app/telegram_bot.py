@@ -1,5 +1,6 @@
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.error import Conflict
 from typing import Optional
 from app.config import settings
 from app.database import SessionLocal
@@ -8,6 +9,7 @@ from app.services import PortfolioService
 from app.utils import format_portfolio_message
 import logging
 import asyncio
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -193,18 +195,54 @@ class TelegramBot:
         # 새로운 이벤트 루프 생성 (별도 스레드용)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+        
         try:
-            # run_polling은 무한 루프로 실행되므로 run_until_complete로 감싸면 계속 실행됨
-            # stop_signals=None으로 시그널 핸들러 비활성화 (별도 스레드에서는 사용 불가)
-            loop.run_until_complete(
-                self.application.run_polling(
-                    allowed_updates=Update.ALL_TYPES,
-                    stop_signals=None,  # 시그널 핸들러 비활성화
-                    drop_pending_updates=True
-                )
-            )
-        except Exception as e:
-            logger.error(f"텔레그램 봇 실행 중 오류: {e}", exc_info=True)
+            max_retries = 3
+            retry_count = 0
+            
+            while retry_count < max_retries:
+                try:
+                    # webhook 삭제 (이전 webhook이 있으면 충돌 발생)
+                    async def delete_webhook():
+                        try:
+                            await self.application.bot.delete_webhook(drop_pending_updates=True)
+                            logger.info("Webhook 삭제 완료")
+                            # webhook 삭제 후 잠시 대기 (다른 인스턴스가 종료될 시간 제공)
+                            await asyncio.sleep(2)
+                        except Exception as e:
+                            logger.warning(f"Webhook 삭제 중 오류 (무시 가능): {e}")
+                    
+                    loop.run_until_complete(delete_webhook())
+                    
+                    # run_polling은 무한 루프로 실행되므로 run_until_complete로 감싸면 계속 실행됨
+                    # stop_signals=None으로 시그널 핸들러 비활성화 (별도 스레드에서는 사용 불가)
+                    loop.run_until_complete(
+                        self.application.run_polling(
+                            allowed_updates=Update.ALL_TYPES,
+                            stop_signals=None,  # 시그널 핸들러 비활성화
+                            drop_pending_updates=True
+                        )
+                    )
+                    # 성공적으로 실행되면 루프 종료
+                    break
+                    
+                except Conflict as e:
+                    retry_count += 1
+                    if retry_count < max_retries:
+                        wait_time = retry_count * 5  # 5초, 10초, 15초 대기
+                        logger.warning(
+                            f"봇 충돌 감지 (재시도 {retry_count}/{max_retries}): "
+                            f"다른 인스턴스가 실행 중입니다. {wait_time}초 후 재시도합니다."
+                        )
+                        time.sleep(wait_time)
+                    else:
+                        logger.error(
+                            f"봇 충돌 오류: 다른 봇 인스턴스가 실행 중입니다. "
+                            f"다른 프로세스를 종료하거나 잠시 기다린 후 다시 시도하세요."
+                        )
+                except Exception as e:
+                    logger.error(f"텔레그램 봇 실행 중 오류: {e}", exc_info=True)
+                    break
         finally:
             loop.close()
 
