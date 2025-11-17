@@ -8,7 +8,7 @@ import threading
 from app.database import get_db, engine, Base
 from app.models import User, PortfolioItem, AlertSettings
 from app.schemas import (
-    UserCreate, UserResponse,
+    UserCreate, UserUpdate, UserResponse,
     PortfolioItemCreate, PortfolioItemResponse,
     AlertSettingsCreate, AlertSettingsResponse,
     PortfolioSummaryResponse
@@ -37,6 +37,66 @@ async def lifespan(app: FastAPI):
     # 데이터베이스 테이블 생성
     Base.metadata.create_all(bind=engine)
     logger.info("데이터베이스 테이블 생성 완료")
+    
+    # .env에서 설정된 사용자 정보 자동 적용
+    if settings.telegram_chat_id and settings.cmc_api_key:
+        try:
+            db = next(get_db())
+            try:
+                user = db.query(User).filter(
+                    User.telegram_chat_id == settings.telegram_chat_id
+                ).first()
+                
+                if user:
+                    # 사용자가 있으면 CMC_API_KEY 업데이트
+                    if user.cmc_api_key != settings.cmc_api_key:
+                        user.cmc_api_key = settings.cmc_api_key
+                        logger.info(f"사용자 {user.id}의 CMC_API_KEY를 .env에서 자동으로 업데이트했습니다.")
+                    
+                    # 기본 통화 업데이트
+                    if user.base_currency != settings.base_currency:
+                        user.base_currency = settings.base_currency
+                        logger.info(f"사용자 {user.id}의 기본 통화를 {settings.base_currency}로 업데이트했습니다.")
+                    
+                    db.commit()
+                    
+                    # 포트폴리오 자동 등록/업데이트
+                    if settings.portfolio:
+                        portfolio_service = PortfolioService(db)
+                        existing_items = db.query(PortfolioItem).filter(
+                            PortfolioItem.user_id == user.id
+                        ).all()
+                        
+                        if existing_items:
+                            # 기존 포트폴리오가 있으면 .env의 값으로 업데이트
+                            logger.info(f"사용자 {user.id}의 기존 포트폴리오를 .env 값으로 업데이트합니다.")
+                            # 기존 항목 삭제
+                            for item in existing_items:
+                                db.delete(item)
+                            db.commit()
+                        
+                        # .env의 포트폴리오 등록
+                        registered_count = 0
+                        for symbol, quantity in settings.portfolio.items():
+                            try:
+                                portfolio_service.add_portfolio_item(
+                                    user.id,
+                                    symbol.upper(),
+                                    float(quantity)
+                                )
+                                registered_count += 1
+                                logger.info(f"포트폴리오 항목 등록: {symbol.upper()} = {quantity}")
+                            except Exception as e:
+                                logger.error(f"포트폴리오 항목 등록 실패 ({symbol}): {e}")
+                        
+                        if registered_count > 0:
+                            logger.info(f"사용자 {user.id}의 포트폴리오 {registered_count}개 항목을 .env에서 자동으로 등록/업데이트했습니다.")
+                else:
+                    logger.info(f"chat_id {settings.telegram_chat_id}에 해당하는 사용자가 없습니다. /start 명령어로 먼저 등록하세요.")
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning(f".env 설정 자동 적용 중 오류: {e}", exc_info=True)
     
     # 텔레그램 봇 초기화 (별도 스레드에서 실행)
     try:
@@ -139,7 +199,7 @@ async def get_user(telegram_chat_id: str, db: Session = Depends(get_db)):
 @app.put("/api/users/{telegram_chat_id}", response_model=UserResponse)
 async def update_user(
     telegram_chat_id: str,
-    user_data: UserCreate,
+    user_data: UserUpdate,
     db: Session = Depends(get_db)
 ):
     """사용자 정보 업데이트"""

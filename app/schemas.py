@@ -7,7 +7,13 @@ class UserCreate(BaseModel):
     telegram_chat_id: str
     cmc_api_key: Optional[str] = None
     cmc_portfolio_id: Optional[str] = None
-    base_currency: str = "USD"
+    base_currency: str = "KRW"
+
+
+class UserUpdate(BaseModel):
+    cmc_api_key: Optional[str] = None
+    cmc_portfolio_id: Optional[str] = None
+    base_currency: Optional[str] = None
 
 
 class UserResponse(BaseModel):

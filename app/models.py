@@ -11,7 +11,7 @@ class User(Base):
     telegram_chat_id = Column(String, unique=True, index=True, nullable=False)
     cmc_api_key = Column(String, nullable=True)
     cmc_portfolio_id = Column(String, nullable=True)
-    base_currency = Column(String, default="USD")  # USD or KRW
+    base_currency = Column(String, default="KRW")  # USD or KRW
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

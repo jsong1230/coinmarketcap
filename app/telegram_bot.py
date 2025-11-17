@@ -77,9 +77,10 @@ class TelegramBot:
                 # 새 사용자 생성
                 new_user = User(
                     telegram_chat_id=chat_id,
-                    base_currency="USD"
+                    base_currency="KRW"
                 )
                 db.add(new_user)
+                db.flush()  # ID를 생성하기 위해 flush
                 
                 # 기본 알림 설정 생성
                 alert_settings = AlertSettings(
@@ -87,6 +88,7 @@ class TelegramBot:
                 )
                 db.add(alert_settings)
                 db.commit()
+                db.refresh(new_user)  # 최신 정보로 새로고침
                 
                 await update.message.reply_text(
                     "🎉 CryptoWatcher Bot에 오신 것을 환영합니다!\n\n"
@@ -97,8 +99,11 @@ class TelegramBot:
                     "/help 명령어로 모든 기능을 확인하세요."
                 )
         except Exception as e:
-            logger.error(f"start_command 오류: {e}")
-            await update.message.reply_text("오류가 발생했습니다. 나중에 다시 시도해주세요.")
+            logger.error(f"start_command 오류: {e}", exc_info=True)
+            await update.message.reply_text(
+                f"오류가 발생했습니다: {str(e)}\n\n"
+                "서버 로그를 확인하거나 관리자에게 문의하세요."
+            )
         finally:
             db.close()
     

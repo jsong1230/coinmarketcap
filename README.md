@@ -39,13 +39,26 @@ pip install -r requirements.txt
 4. 환경 변수 설정:
 프로젝트 루트에 `.env` 파일을 생성하고 다음 내용을 입력하세요:
 ```bash
+# 필수 설정
 CMC_API_KEY=your_cmc_api_key_here
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+
+# 선택 설정 (자동 설정 기능 사용 시)
+TELEGRAM_CHAT_ID=your_telegram_chat_id  # 텔레그램 @userinfobot으로 확인 가능
+BASE_CURRENCY=KRW  # 기본 통화 (기본값: KRW)
+PORTFOLIO_JSON={"BTC": 4.4744, "ETH": 26.52, "SOL": 100.26, "META": 11325.73}  # 포트폴리오 정보
+
+# 서버 설정
 DATABASE_URL=sqlite:///./cryptowatcher.db
 HOST=0.0.0.0
 PORT=8000
 SCHEDULER_INTERVAL_MINUTES=5
 ```
+
+**자동 설정 기능:**
+- `TELEGRAM_CHAT_ID`와 `CMC_API_KEY`를 설정하면 서버 시작 시 자동으로 사용자 정보가 업데이트됩니다.
+- `PORTFOLIO_JSON`을 설정하면 서버 시작 시 자동으로 포트폴리오가 등록/업데이트됩니다.
+- 자산을 변경하려면 `.env`의 `PORTFOLIO_JSON`을 수정하고 서버를 재시작하세요.
 
 5. 데이터베이스 초기화:
 ```bash
@@ -120,12 +133,29 @@ tail -f logs/server.log
 
 ## 텔레그램 명령어
 
-- `/start` - 봇 시작 및 초기 설정
+- `/start` - 봇 시작 및 초기 설정 (먼저 실행 필요)
 - `/summary` - 포트폴리오 요약 조회
 - `/alerts` - 현재 알림 설정 조회
 - `/set_alert` - 알림 기준 설정
 - `/advice` - 투자 조언 요청
 - `/help` - 도움말
+
+## 자산 변경 방법
+
+포트폴리오 자산을 변경하려면:
+
+1. `.env` 파일에서 `PORTFOLIO_JSON` 수정:
+   ```bash
+   PORTFOLIO_JSON={"BTC": 5.0, "ETH": 30.0, "SOL": 120.0}
+   ```
+
+2. 서버 재시작:
+   ```bash
+   ./scripts/stop_server.sh
+   ./scripts/start_server_background.sh
+   ```
+
+서버 재시작 시 기존 포트폴리오가 자동으로 삭제되고 `.env`의 새 값으로 등록됩니다.
 
 ## API 문서
 

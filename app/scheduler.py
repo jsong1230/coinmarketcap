@@ -26,14 +26,23 @@ class MonitoringScheduler:
         
         try:
             users = db.query(User).all()
+            logger.info(f"포트폴리오 체크 시작: 등록된 사용자 수 = {len(users)}")
+            
+            if not users:
+                logger.warning("등록된 사용자가 없습니다. /start 명령어로 사용자를 등록하세요.")
+                return
             
             for user in users:
                 try:
+                    logger.info(f"사용자 {user.id} (chat_id: {user.telegram_chat_id}) 포트폴리오 확인 중...")
                     portfolio_service = PortfolioService(db)
                     summary = portfolio_service.get_portfolio_summary(user.id)
                     
                     if not summary:
+                        logger.warning(f"사용자 {user.id}의 포트폴리오가 설정되지 않았습니다.")
                         continue
+                    
+                    logger.info(f"사용자 {user.id} 포트폴리오 총액: {summary['total_value']} {user.base_currency}")
                     
                     # 스냅샷 저장
                     alert_service = AlertService(db)
@@ -53,6 +62,7 @@ class MonitoringScheduler:
                     
                     # 알림 확인
                     alerts = alert_service.check_alerts(user.id)
+                    logger.info(f"사용자 {user.id} 알림 확인 결과: {len(alerts)}개 알림 발생")
                     
                     for alert in alerts:
                         try:
@@ -78,14 +88,23 @@ class MonitoringScheduler:
         
         try:
             users = db.query(User).all()
+            logger.info(f"1시간 요약 전송 시작: 등록된 사용자 수 = {len(users)}")
+            
+            if not users:
+                logger.warning("등록된 사용자가 없습니다.")
+                return
             
             for user in users:
                 try:
+                    logger.info(f"사용자 {user.id} (chat_id: {user.telegram_chat_id}) 요약 생성 중...")
                     portfolio_service = PortfolioService(db)
                     summary = portfolio_service.get_portfolio_summary(user.id)
                     
                     if not summary:
+                        logger.warning(f"사용자 {user.id}의 포트폴리오가 설정되지 않아 요약을 건너뜁니다.")
                         continue
+                    
+                    logger.info(f"사용자 {user.id} 요약 생성 완료: 총액 {summary['total_value']} {user.base_currency}")
                     
                     # 포트폴리오 요약 메시지 생성
                     message = format_portfolio_message(
