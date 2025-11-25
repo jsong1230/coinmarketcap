@@ -34,6 +34,7 @@ class TelegramBot:
         self.application.add_handler(CommandHandler("start", self.start_command))
         self.application.add_handler(CommandHandler("summary", self.summary_command))
         self.application.add_handler(CommandHandler("alerts", self.alerts_command))
+        self.application.add_handler(CommandHandler("set_portfolio", self.set_portfolio_command))
         self.application.add_handler(CommandHandler("set_alert", self.set_alert_command))
         self.application.add_handler(CommandHandler("advice", self.advice_command))
         self.application.add_handler(CommandHandler("help", self.help_command))
@@ -177,6 +178,63 @@ class TelegramBot:
         finally:
             db.close()
     
+    async def set_portfolio_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """포트폴리오 설정"""
+        chat_id = str(update.effective_chat.id)
+        db = SessionLocal()
+        
+        try:
+            user = db.query(User).filter(User.telegram_chat_id == chat_id).first()
+            
+            if not user:
+                await update.message.reply_text("먼저 /start 명령어로 등록해주세요.")
+                return
+            
+            # .env의 포트폴리오 정보 사용
+            if settings.portfolio:
+                portfolio_service = PortfolioService(db)
+                existing_items = db.query(PortfolioItem).filter(
+                    PortfolioItem.user_id == user.id
+                ).all()
+                
+                if existing_items:
+                    # 기존 포트폴리오 삭제
+                    for item in existing_items:
+                        db.delete(item)
+                    db.commit()
+                
+                # .env의 포트폴리오 등록
+                registered_items = []
+                for symbol, quantity in settings.portfolio.items():
+                    try:
+                        portfolio_service.add_portfolio_item(
+                            user.id,
+                            symbol.upper(),
+                            float(quantity)
+                        )
+                        registered_items.append(f"{symbol.upper()}: {quantity}")
+                    except Exception as e:
+                        logger.error(f"포트폴리오 항목 등록 실패 ({symbol}): {e}")
+                
+                if registered_items:
+                    message = "✅ 포트폴리오가 등록되었습니다:\n\n"
+                    message += "\n".join(registered_items)
+                    message += f"\n\n기본 통화: {user.base_currency}"
+                    await update.message.reply_text(message)
+                else:
+                    await update.message.reply_text("포트폴리오 등록에 실패했습니다.")
+            else:
+                await update.message.reply_text(
+                    "포트폴리오 정보가 .env 파일에 설정되지 않았습니다.\n\n"
+                    ".env 파일에 PORTFOLIO_JSON을 설정하고 서버를 재시작하세요.\n"
+                    "예: PORTFOLIO_JSON={\"BTC\": 4.4744, \"ETH\": 26.52}"
+                )
+        except Exception as e:
+            logger.error(f"set_portfolio_command 오류: {e}", exc_info=True)
+            await update.message.reply_text("포트폴리오 설정 중 오류가 발생했습니다.")
+        finally:
+            db.close()
+    
     async def set_alert_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """알림 기준 설정"""
         await update.message.reply_text(
@@ -199,6 +257,7 @@ class TelegramBot:
 /start - 봇 시작 및 사용자 등록
 /summary - 포트폴리오 요약 조회
 /alerts - 현재 알림 설정 조회
+/set_portfolio - 포트폴리오 등록 (.env의 PORTFOLIO_JSON 사용)
 /set_alert - 알림 기준 설정 (API 사용)
 /advice - 투자 조언 요청
 /help - 이 도움말 표시

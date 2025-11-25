@@ -9,6 +9,7 @@
 ## [Unreleased]
 
 ### Added
+- `/set_portfolio` 텔레그램 봇 명령어 추가 (.env의 PORTFOLIO_JSON 사용)
 - Git pre-commit hook 추가 (커밋 전 README.md, CHANGELOG.md 업데이트 확인)
 - CHANGELOG.md 파일 추가
 - Git hooks 설치 스크립트 (scripts/setup_git_hooks.sh)

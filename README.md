@@ -144,7 +144,8 @@ tail -f logs/server.log
 - `/start` - 봇 시작 및 초기 설정 (먼저 실행 필요)
 - `/summary` - 포트폴리오 요약 조회
 - `/alerts` - 현재 알림 설정 조회
-- `/set_alert` - 알림 기준 설정
+- `/set_portfolio` - 포트폴리오 등록 (.env의 PORTFOLIO_JSON 사용)
+- `/set_alert` - 알림 기준 설정 (API 사용)
 - `/advice` - 투자 조언 요청
 - `/help` - 도움말
 
