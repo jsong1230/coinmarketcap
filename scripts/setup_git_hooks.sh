@@ -31,3 +31,4 @@ echo "✅ Git hooks 설치가 완료되었습니다."
 echo ""
 echo "이제 커밋 전에 README.md와 CHANGELOG.md 업데이트를 확인합니다."
 
+

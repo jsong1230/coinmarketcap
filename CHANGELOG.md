@@ -10,6 +10,9 @@
 - CHANGELOG.md 파일 추가
 - Git hooks 설치 스크립트 (scripts/setup_git_hooks.sh)
 
+### Fixed
+- setup_git_hooks.sh 포맷팅 수정
+
 ### Changed
 - 요약 메시지 전송 주기를 1시간에서 3시간으로 변경
 - 기본 통화를 USD에서 KRW로 변경
