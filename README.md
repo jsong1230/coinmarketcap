@@ -60,7 +60,15 @@ SCHEDULER_INTERVAL_MINUTES=5
 - `PORTFOLIO_JSON`을 설정하면 서버 시작 시 자동으로 포트폴리오가 등록/업데이트됩니다.
 - 자산을 변경하려면 `.env`의 `PORTFOLIO_JSON`을 수정하고 서버를 재시작하세요.
 
-5. 데이터베이스 초기화:
+5. Git hooks 설치 (선택사항, 권장):
+```bash
+chmod +x scripts/setup_git_hooks.sh
+./scripts/setup_git_hooks.sh
+```
+
+**참고**: Git hooks는 커밋 전에 README.md와 CHANGELOG.md 업데이트를 확인합니다.
+
+6. 데이터베이스 초기화:
 ```bash
 alembic upgrade head
 ```
@@ -176,6 +184,17 @@ coinmarketcap/
 ```
 
 ## 개발
+
+### Git Hooks
+
+커밋 전에 README.md와 CHANGELOG.md 업데이트를 확인하는 pre-commit hook이 포함되어 있습니다.
+
+설치:
+```bash
+./scripts/setup_git_hooks.sh
+```
+
+**주의**: 코드를 변경할 때는 항상 README.md와 CHANGELOG.md를 함께 업데이트하세요.
 
 ### 테스트 실행
 ```bash

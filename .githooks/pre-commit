@@ -1,0 +1,52 @@
+#!/bin/bash
+# Pre-commit hook: 커밋 전에 README, CHANGELOG 업데이트 확인
+
+# 변경된 파일 목록 가져오기
+STAGED_FILES=$(git diff --cached --name-only)
+
+# 코드 파일이 변경되었는지 확인
+CODE_CHANGED=false
+for file in $STAGED_FILES; do
+    # app/, scripts/, tests/ 디렉토리의 파일이 변경되었는지 확인
+    if [[ "$file" =~ ^(app/|scripts/|tests/).*\.(py|sh)$ ]]; then
+        CODE_CHANGED=true
+        break
+    fi
+done
+
+# 코드가 변경되었고 README.md나 CHANGELOG.md가 변경되지 않았다면 경고
+if [ "$CODE_CHANGED" = true ]; then
+    README_CHANGED=false
+    CHANGELOG_CHANGED=false
+    
+    for file in $STAGED_FILES; do
+        if [ "$file" = "README.md" ]; then
+            README_CHANGED=true
+        fi
+        if [ "$file" = "CHANGELOG.md" ]; then
+            CHANGELOG_CHANGED=true
+        fi
+    done
+    
+    if [ "$README_CHANGED" = false ] || [ "$CHANGELOG_CHANGED" = false ]; then
+        echo ""
+        echo "⚠️  경고: 코드가 변경되었지만 문서가 업데이트되지 않았습니다."
+        echo ""
+        if [ "$README_CHANGED" = false ]; then
+            echo "   - README.md가 변경되지 않았습니다."
+        fi
+        if [ "$CHANGELOG_CHANGED" = false ]; then
+            echo "   - CHANGELOG.md가 변경되지 않았습니다."
+        fi
+        echo ""
+        echo "계속하시겠습니까? (y/N)"
+        read -r response
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            echo "커밋이 취소되었습니다."
+            exit 1
+        fi
+    fi
+fi
+
+exit 0
+
