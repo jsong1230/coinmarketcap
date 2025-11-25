@@ -50,7 +50,7 @@ class AlertSettings(Base):
     portfolio_absolute_threshold = Column(Float, nullable=True)  # absolute value change
     
     # Notification settings
-    min_notification_interval_minutes = Column(Integer, default=15)
+    min_notification_interval_minutes = Column(Integer, default=15)  # 최소 알림 간격 (분)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

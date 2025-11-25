@@ -83,12 +83,12 @@ class MonitoringScheduler:
             db.close()
     
     async def send_hourly_summary(self):
-        """1시간마다 포트폴리오 요약 전송"""
+        """3시간마다 포트폴리오 요약 전송"""
         db = SessionLocal()
         
         try:
             users = db.query(User).all()
-            logger.info(f"1시간 요약 전송 시작: 등록된 사용자 수 = {len(users)}")
+            logger.info(f"3시간 요약 전송 시작: 등록된 사용자 수 = {len(users)}")
             
             if not users:
                 logger.warning("등록된 사용자가 없습니다.")
@@ -119,15 +119,15 @@ class MonitoringScheduler:
                             chat_id=user.telegram_chat_id,
                             text=message
                         )
-                        logger.info(f"1시간 요약 전송 완료: user_id={user.id}")
+                        logger.info(f"3시간 요약 전송 완료: user_id={user.id}")
                     except Exception as e:
-                        logger.error(f"1시간 요약 전송 실패: user_id={user.id}, error={e}")
+                        logger.error(f"3시간 요약 전송 실패: user_id={user.id}, error={e}")
                 
                 except Exception as e:
                     logger.error(f"사용자 {user.id} 요약 생성 실패: {e}")
         
         except Exception as e:
-            logger.error(f"1시간 요약 스케줄러 실행 오류: {e}")
+            logger.error(f"3시간 요약 스케줄러 실행 오류: {e}")
         finally:
             db.close()
     
@@ -143,14 +143,14 @@ class MonitoringScheduler:
         )
         logger.info(f"포트폴리오 모니터링 스케줄러 시작: {interval_minutes}분 간격")
         
-        # 1시간마다 요약 전송
+        # 3시간마다 요약 전송
         self.scheduler.add_job(
             self.send_hourly_summary,
-            trigger=IntervalTrigger(hours=1),
+            trigger=IntervalTrigger(hours=3),
             id="hourly_summary",
             replace_existing=True
         )
-        logger.info("1시간 요약 스케줄러 시작: 1시간 간격")
+        logger.info("3시간 요약 스케줄러 시작: 3시간 간격")
         
         self.scheduler.start()
 
