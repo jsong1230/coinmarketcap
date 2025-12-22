@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from typing import Dict, List, Optional
 from app.models import User, PortfolioItem, AlertSettings, PriceSnapshot
 from app.cmc_client import CMCClient
+from app.coingecko_client import CoinGeckoClient
 from app.utils import aggregate_portfolio_items, calculate_percentage_change
 from datetime import datetime, timedelta
 import logging
@@ -32,14 +33,22 @@ class PortfolioService:
         aggregated_items, item_ids = aggregate_portfolio_items(portfolio_items)
         symbols = list(aggregated_items.keys())
         
-        # CMC API로 가격 조회
-        cmc_client = CMCClient(user.cmc_api_key)
+        # API 제공자에 따라 클라이언트 선택
+        api_provider = user.api_provider or "cmc"
+        
+        if api_provider.lower() == "coingecko":
+            client = CoinGeckoClient(user.coingecko_api_key)
+            logger.info(f"CoinGecko API 사용: 사용자 {user.id}")
+        else:
+            client = CMCClient(user.cmc_api_key)
+            logger.info(f"CoinMarketCap API 사용: 사용자 {user.id}")
+        
         try:
-            response = cmc_client.get_latest_quotes(symbols, user.base_currency)
+            response = client.get_latest_quotes(symbols, user.base_currency)
             price_data = {}
             
             for symbol in symbols:
-                price_info = cmc_client.parse_quote_data(response, symbol, user.base_currency)
+                price_info = client.parse_quote_data(response, symbol, user.base_currency)
                 if price_info:
                     price_data[symbol] = price_info
             

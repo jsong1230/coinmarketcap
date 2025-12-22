@@ -4,7 +4,7 @@ from telegram.error import Conflict, TimedOut, NetworkError
 from typing import Optional
 from app.config import settings
 from app.database import SessionLocal
-from app.models import User, AlertSettings
+from app.models import User, AlertSettings, PortfolioItem
 from app.services import PortfolioService
 from app.utils import format_portfolio_message
 import logging
@@ -78,6 +78,7 @@ class TelegramBot:
                 # 새 사용자 생성
                 new_user = User(
                     telegram_chat_id=chat_id,
+                    api_provider="cmc",  # 기본값: CoinMarketCap
                     base_currency="KRW"
                 )
                 db.add(new_user)

@@ -8,6 +8,12 @@ class Settings(BaseSettings):
     # CoinMarketCap API
     cmc_api_key: str = os.getenv("CMC_API_KEY", "test_key")
     
+    # CoinGecko API (선택사항 - API 키 없이도 무료 공개 API 사용 가능)
+    coingecko_api_key: Optional[str] = os.getenv("COINGECKO_API_KEY", None)
+    
+    # API Provider (cmc or coingecko)
+    api_provider: str = os.getenv("API_PROVIDER", "cmc")
+    
     # Telegram Bot
     telegram_bot_token: str = os.getenv("TELEGRAM_BOT_TOKEN", "test_token")
     telegram_chat_id: Optional[str] = os.getenv("TELEGRAM_CHAT_ID", None)

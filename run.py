@@ -21,7 +21,16 @@ if not env_file.exists():
     sys.exit(1)
 
 # 환경 변수 확인
-required_vars = ["CMC_API_KEY", "TELEGRAM_BOT_TOKEN"]
+api_provider = os.getenv("API_PROVIDER", "cmc").lower()
+required_vars = ["TELEGRAM_BOT_TOKEN"]
+
+# API 제공자에 따라 필수 변수 결정
+if api_provider == "cmc":
+    required_vars.append("CMC_API_KEY")
+elif api_provider == "coingecko":
+    # CoinGecko는 API 키 없이도 사용 가능 (선택사항)
+    pass
+
 missing_vars = [var for var in required_vars if not os.getenv(var)]
 
 if missing_vars:

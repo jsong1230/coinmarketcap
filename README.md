@@ -1,19 +1,22 @@
 # CryptoWatcher Bot
 
-CoinMarketCap(CMC) 포트폴리오 데이터를 기반으로 가격 변동을 자동 감지하여 텔레그램으로 실시간 알림을 보내는 자동화 모니터링 서비스입니다.
+암호화폐 포트폴리오 데이터를 기반으로 가격 변동을 자동 감지하여 텔레그램으로 실시간 알림을 보내는 자동화 모니터링 서비스입니다.
 
 ## 주요 기능
 
-- 📊 CMC API를 통한 실시간 가격 모니터링
+- 📊 실시간 가격 모니터링 (CoinMarketCap 또는 CoinGecko API 지원)
 - 🔔 텔레그램을 통한 자동 알림
 - 💰 포트폴리오 평가액 자동 계산
 - ⚙️ 사용자별 알림 기준 설정
 - 📈 변동률 분석 및 스냅샷 저장
+- 🔄 API 제공자 선택 가능 (CoinMarketCap / CoinGecko)
 
 ## 요구사항
 
 - Python 3.11+
-- CoinMarketCap API Key
+- API Key (선택사항):
+  - CoinMarketCap API Key (CoinMarketCap 사용 시)
+  - CoinGecko API Key (CoinGecko Pro 사용 시, 무료 API는 키 불필요)
 - Telegram Bot Token
 
 ## 설치
@@ -40,20 +43,32 @@ pip install -r requirements.txt
 프로젝트 루트에 `.env` 파일을 생성하고 다음 내용을 입력하세요:
 ```bash
 # 필수 설정
-CMC_API_KEY=your_cmc_api_key_here
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+
+# API 제공자 선택 (cmc 또는 coingecko)
+API_PROVIDER=cmc  # 또는 coingecko
+
+# CoinMarketCap 설정 (API_PROVIDER=cmc일 때)
+CMC_API_KEY=your_cmc_api_key_here
+
+# CoinGecko 설정 (API_PROVIDER=coingecko일 때, 선택사항)
+COINGECKO_API_KEY=your_coingecko_api_key  # 무료 API 사용 시 생략 가능
 
 # 선택 설정 (자동 설정 기능 사용 시)
 TELEGRAM_CHAT_ID=your_telegram_chat_id  # 텔레그램 @userinfobot으로 확인 가능
 BASE_CURRENCY=KRW  # 기본 통화 (기본값: KRW)
-PORTFOLIO_JSON={"BTC": 4.4744, "ETH": 26.52, "SOL": 100.26, "META": 11325.73}  # 포트폴리오 정보
+PORTFOLIO_JSON={"BTC": 4.4744, "ETH": 26.52, "SOL": 100.26}  # 포트폴리오 정보
 
 # 서버 설정
 DATABASE_URL=sqlite:///./cryptowatcher.db
 HOST=0.0.0.0
 PORT=8000
-SCHEDULER_INTERVAL_MINUTES=5
+SCHEDULER_INTERVAL_MINUTES=30
 ```
+
+**API 제공자 선택:**
+- `API_PROVIDER=cmc`: CoinMarketCap API 사용 (CMC_API_KEY 필수)
+- `API_PROVIDER=coingecko`: CoinGecko API 사용 (COINGECKO_API_KEY는 선택사항, 무료 API는 키 불필요)
 
 **자동 설정 기능:**
 - `TELEGRAM_CHAT_ID`와 `CMC_API_KEY`를 설정하면 서버 시작 시 자동으로 사용자 정보가 업데이트됩니다.

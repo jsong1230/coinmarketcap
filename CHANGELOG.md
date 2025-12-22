@@ -5,6 +5,12 @@
 ## [Unreleased]
 
 ### Added
+- CoinGecko API 지원 추가 (CoinMarketCap 대안)
+  - 무료 공개 API 지원 (API 키 불필요)
+  - CoinGecko Pro API 지원 (선택사항)
+  - API 제공자 선택 기능 (API_PROVIDER 환경변수)
+- User 모델에 `api_provider` 및 `coingecko_api_key` 필드 추가
+- CoinGecko 클라이언트 (`app/coingecko_client.py`) 추가
 - `/set_portfolio` 텔레그램 봇 명령어 추가 (.env의 PORTFOLIO_JSON 사용)
 - Git pre-commit hook 추가 (커밋 전 README.md, CHANGELOG.md 업데이트 확인)
 - CHANGELOG.md 파일 추가
@@ -12,6 +18,9 @@
 
 ### Fixed
 - setup_git_hooks.sh 포맷팅 수정
+- CoinGecko 클라이언트에서 'None' 문자열 처리 개선
+- telegram_bot.py에서 PortfolioItem import 누락 수정
+- run.py에서 CoinGecko 사용 시 CMC_API_KEY 필수 체크 제거
 
 ### Changed
 - 요약 메시지 전송 주기를 1시간에서 3시간으로 변경

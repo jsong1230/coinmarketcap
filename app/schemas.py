@@ -6,13 +6,17 @@ from datetime import datetime
 class UserCreate(BaseModel):
     telegram_chat_id: str
     cmc_api_key: Optional[str] = None
+    coingecko_api_key: Optional[str] = None
     cmc_portfolio_id: Optional[str] = None
+    api_provider: str = "cmc"  # "cmc" or "coingecko"
     base_currency: str = "KRW"
 
 
 class UserUpdate(BaseModel):
     cmc_api_key: Optional[str] = None
+    coingecko_api_key: Optional[str] = None
     cmc_portfolio_id: Optional[str] = None
+    api_provider: Optional[str] = None  # "cmc" or "coingecko"
     base_currency: Optional[str] = None
 
 
@@ -20,6 +24,7 @@ class UserResponse(BaseModel):
     id: int
     telegram_chat_id: str
     cmc_portfolio_id: Optional[str]
+    api_provider: str
     base_currency: str
     created_at: datetime
     

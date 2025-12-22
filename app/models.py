@@ -10,7 +10,9 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     telegram_chat_id = Column(String, unique=True, index=True, nullable=False)
     cmc_api_key = Column(String, nullable=True)
+    coingecko_api_key = Column(String, nullable=True)  # CoinGecko API 키 (선택사항 - API 키 없이도 무료 공개 API 사용 가능)
     cmc_portfolio_id = Column(String, nullable=True)
+    api_provider = Column(String, default="cmc")  # "cmc" or "coingecko"
     base_currency = Column(String, default="KRW")  # USD or KRW
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

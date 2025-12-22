@@ -53,6 +53,16 @@ async def lifespan(app: FastAPI):
                         user.cmc_api_key = settings.cmc_api_key
                         logger.info(f"사용자 {user.id}의 CMC_API_KEY를 .env에서 자동으로 업데이트했습니다.")
                     
+                    # CoinGecko API 키 업데이트
+                    if settings.coingecko_api_key and user.coingecko_api_key != settings.coingecko_api_key:
+                        user.coingecko_api_key = settings.coingecko_api_key
+                        logger.info(f"사용자 {user.id}의 COINGECKO_API_KEY를 .env에서 자동으로 업데이트했습니다.")
+                    
+                    # API 제공자 업데이트
+                    if settings.api_provider and user.api_provider != settings.api_provider:
+                        user.api_provider = settings.api_provider
+                        logger.info(f"사용자 {user.id}의 API_PROVIDER를 {settings.api_provider}로 업데이트했습니다.")
+                    
                     # 기본 통화 업데이트
                     if user.base_currency != settings.base_currency:
                         user.base_currency = settings.base_currency
@@ -172,7 +182,9 @@ async def create_user(user_data: UserCreate, db: Session = Depends(get_db)):
     new_user = User(
         telegram_chat_id=user_data.telegram_chat_id,
         cmc_api_key=user_data.cmc_api_key,
+        coingecko_api_key=user_data.coingecko_api_key,
         cmc_portfolio_id=user_data.cmc_portfolio_id,
+        api_provider=user_data.api_provider,
         base_currency=user_data.base_currency
     )
     db.add(new_user)
@@ -209,8 +221,12 @@ async def update_user(
     
     if user_data.cmc_api_key:
         user.cmc_api_key = user_data.cmc_api_key
+    if user_data.coingecko_api_key:
+        user.coingecko_api_key = user_data.coingecko_api_key
     if user_data.cmc_portfolio_id:
         user.cmc_portfolio_id = user_data.cmc_portfolio_id
+    if user_data.api_provider:
+        user.api_provider = user_data.api_provider
     if user_data.base_currency:
         user.base_currency = user_data.base_currency
     
