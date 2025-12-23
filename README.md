@@ -22,18 +22,21 @@
 ## 설치
 
 1. 저장소 클론:
+
 ```bash
 git clone <repository-url>
 cd coinmarketcap
 ```
 
 2. 가상환경 생성 및 활성화:
+
 ```bash
 python3.11 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 ```
 
 3. 의존성 설치:
+
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
@@ -41,6 +44,7 @@ pip install -r requirements.txt
 
 4. 환경 변수 설정:
 프로젝트 루트에 `.env` 파일을 생성하고 다음 내용을 입력하세요:
+
 ```bash
 # 필수 설정
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
@@ -88,6 +92,7 @@ SCHEDULER_INTERVAL_MINUTES=30
 - 자산을 변경하려면 `.env`의 `PORTFOLIO_JSON`을 수정하고 서버를 재시작하세요.
 
 5. Git hooks 설치 (선택사항, 권장):
+
 ```bash
 chmod +x scripts/setup_git_hooks.sh
 ./scripts/setup_git_hooks.sh
@@ -96,6 +101,7 @@ chmod +x scripts/setup_git_hooks.sh
 **참고**: Git hooks는 커밋 전에 README.md와 CHANGELOG.md 업데이트를 확인합니다.
 
 6. 데이터베이스 초기화:
+
 ```bash
 alembic upgrade head
 ```
@@ -113,6 +119,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 또는 스크립트 사용:
+
 ```bash
 chmod +x scripts/start_server.sh  # 처음 한 번만 실행
 ./scripts/start_server.sh
@@ -130,16 +137,19 @@ chmod +x scripts/start_server_background.sh  # 처음 한 번만 실행
 ```
 
 서버 상태 확인:
+
 ```bash
 ./scripts/status_server.sh
 ```
 
 서버 종료:
+
 ```bash
 ./scripts/stop_server.sh
 ```
 
 로그 확인:
+
 ```bash
 tail -f logs/server.log
 ```
@@ -155,11 +165,13 @@ tail -f logs/server.log
 ```
 
 상태 확인:
+
 ```bash
 ./scripts/status_monitor.sh
 ```
 
 중지:
+
 ```bash
 ./scripts/stop_monitor.sh
 ```
@@ -181,11 +193,13 @@ tail -f logs/server.log
 포트폴리오 자산을 변경하려면:
 
 1. `.env` 파일에서 `PORTFOLIO_JSON` 수정:
+
    ```bash
    PORTFOLIO_JSON={"BTC": 5.0, "ETH": 30.0, "SOL": 120.0}
    ```
 
 2. 서버 재시작:
+
    ```bash
    ./scripts/stop_server.sh
    ./scripts/start_server_background.sh
@@ -198,12 +212,13 @@ tail -f logs/server.log
 ## API 문서
 
 서버 실행 후 다음 URL에서 API 문서를 확인할 수 있습니다:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+
+- Swagger UI: <http://localhost:8000/docs>
+- ReDoc: <http://localhost:8000/redoc>
 
 ## 프로젝트 구조
 
-```
+```text
 coinmarketcap/
 ├── app/                    # 애플리케이션 코드
 │   ├── cmc_client.py      # CoinMarketCap API 클라이언트
@@ -227,6 +242,7 @@ coinmarketcap/
 커밋 전에 README.md와 CHANGELOG.md 업데이트를 확인하는 pre-commit hook이 포함되어 있습니다.
 
 설치:
+
 ```bash
 ./scripts/setup_git_hooks.sh
 ```
@@ -234,11 +250,13 @@ coinmarketcap/
 **주의**: 코드를 변경할 때는 항상 README.md와 CHANGELOG.md를 함께 업데이트하세요.
 
 ### 테스트 실행
+
 ```bash
 pytest
 ```
 
 ### 코드 포맷팅
+
 ```bash
 black .
 isort .
@@ -255,4 +273,3 @@ isort .
 ## 라이선스
 
 MIT
-
