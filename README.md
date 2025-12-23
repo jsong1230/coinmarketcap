@@ -67,11 +67,23 @@ SCHEDULER_INTERVAL_MINUTES=30
 ```
 
 **API 제공자 선택:**
-- `API_PROVIDER=cmc`: CoinMarketCap API 사용 (CMC_API_KEY 필수)
-- `API_PROVIDER=coingecko`: CoinGecko API 사용 (COINGECKO_API_KEY는 선택사항, 무료 API는 키 불필요)
+
+- **CoinMarketCap (`API_PROVIDER=cmc`)**:
+  - `CMC_API_KEY` 필수
+  - 주식 심볼 지원 (예: META, AAPL)
+  - 유료 API (무료 티어 제한 있음)
+
+- **CoinGecko (`API_PROVIDER=coingecko`)**:
+  - `COINGECKO_API_KEY` 선택사항 (무료 공개 API 사용 가능)
+  - 무료 API: API 키 없이 사용 가능 (rate limit 있음)
+  - Pro API: API 키 필요 (더 높은 rate limit)
+  - 주로 암호화폐 지원 (주식 심볼 미지원)
 
 **자동 설정 기능:**
-- `TELEGRAM_CHAT_ID`와 `CMC_API_KEY`를 설정하면 서버 시작 시 자동으로 사용자 정보가 업데이트됩니다.
+- `TELEGRAM_CHAT_ID`와 API 키를 설정하면 서버 시작 시 자동으로 사용자 정보가 업데이트됩니다.
+  - CoinMarketCap 사용 시: `CMC_API_KEY` 설정
+  - CoinGecko 사용 시: `COINGECKO_API_KEY` 설정 (선택사항, 무료 API는 생략 가능)
+- `API_PROVIDER`를 설정하면 서버 시작 시 자동으로 API 제공자가 업데이트됩니다.
 - `PORTFOLIO_JSON`을 설정하면 서버 시작 시 자동으로 포트폴리오가 등록/업데이트됩니다.
 - 자산을 변경하려면 `.env`의 `PORTFOLIO_JSON`을 수정하고 서버를 재시작하세요.
 
@@ -181,6 +193,8 @@ tail -f logs/server.log
 
 서버 재시작 시 기존 포트폴리오가 자동으로 삭제되고 `.env`의 새 값으로 등록됩니다.
 
+**참고**: CoinGecko를 사용하는 경우 주식 심볼(예: META, AAPL)은 지원하지 않습니다. 주식 심볼이 포함된 포트폴리오는 CoinMarketCap을 사용하세요.
+
 ## API 문서
 
 서버 실행 후 다음 URL에서 API 문서를 확인할 수 있습니다:
@@ -191,12 +205,19 @@ tail -f logs/server.log
 
 ```
 coinmarketcap/
-├── app/              # 애플리케이션 코드
-├── tests/            # 테스트 코드
-├── scripts/          # 유틸리티 스크립트
-├── docs/             # 문서
-├── alembic/          # 데이터베이스 마이그레이션
-└── .github/          # GitHub Actions 워크플로우
+├── app/                    # 애플리케이션 코드
+│   ├── cmc_client.py      # CoinMarketCap API 클라이언트
+│   ├── coingecko_client.py # CoinGecko API 클라이언트
+│   ├── main.py            # FastAPI 애플리케이션
+│   ├── models.py          # 데이터베이스 모델
+│   ├── services.py         # 비즈니스 로직
+│   ├── scheduler.py        # 스케줄러 (가격 모니터링)
+│   └── telegram_bot.py     # 텔레그램 봇
+├── tests/                  # 테스트 코드
+├── scripts/                # 유틸리티 스크립트
+├── docs/                   # 문서
+├── alembic/                # 데이터베이스 마이그레이션
+└── .github/                # GitHub Actions 워크플로우
 ```
 
 ## 개발
