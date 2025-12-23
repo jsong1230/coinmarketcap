@@ -84,6 +84,8 @@ class MonitoringScheduler:
     
     async def send_hourly_summary(self):
         """3시간마다 포트폴리오 요약 전송"""
+        logger.info("=" * 60)
+        logger.info("3시간 요약 전송 함수 시작")
         db = SessionLocal()
         
         try:
@@ -121,15 +123,17 @@ class MonitoringScheduler:
                         )
                         logger.info(f"3시간 요약 전송 완료: user_id={user.id}")
                     except Exception as e:
-                        logger.error(f"3시간 요약 전송 실패: user_id={user.id}, error={e}")
+                        logger.error(f"3시간 요약 전송 실패: user_id={user.id}, error={e}", exc_info=True)
                 
                 except Exception as e:
-                    logger.error(f"사용자 {user.id} 요약 생성 실패: {e}")
+                    logger.error(f"사용자 {user.id} 요약 생성 실패: {e}", exc_info=True)
         
         except Exception as e:
-            logger.error(f"3시간 요약 스케줄러 실행 오류: {e}")
+            logger.error(f"3시간 요약 스케줄러 실행 오류: {e}", exc_info=True)
         finally:
             db.close()
+            logger.info("3시간 요약 전송 함수 종료")
+            logger.info("=" * 60)
     
     def start(self):
         """스케줄러 시작"""

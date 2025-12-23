@@ -21,6 +21,7 @@
 - CoinGecko 클라이언트에서 'None' 문자열 처리 개선
 - telegram_bot.py에서 PortfolioItem import 누락 수정
 - run.py에서 CoinGecko 사용 시 CMC_API_KEY 필수 체크 제거
+- 스케줄러 로깅 강화 (3시간 요약 전송 함수에 상세 로깅 추가)
 
 ### Changed
 - 요약 메시지 전송 주기를 1시간에서 3시간으로 변경
